@@ -2,10 +2,10 @@
 
 import { AnimatePresence, motion } from 'framer-motion'
 import { ExternalLink, Layers } from 'lucide-react'
-import { Github } from '@/components/brand-icons'
+import { Github } from '@/components/shared/brand-icons'
 import { useState } from 'react'
-import { SectionHeading } from '@/components/section-heading'
-import { projectCategories, projects, type Project } from '@/lib/data'
+import { SectionHeading } from '@/components/shared/section-heading'
+import { projectCategories, projects, type Project } from '@/data/projects'
 
 function ProjectCard({ project }: { project: Project }) {
   return (

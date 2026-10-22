@@ -1,6 +1,6 @@
-import { Reveal } from '@/components/reveal'
-import { SectionHeading } from '@/components/section-heading'
-import { aboutPoints } from '@/lib/data'
+import { Reveal } from '@/components/shared/reveal'
+import { SectionHeading } from '@/components/shared/section-heading'
+import { aboutPoints } from '@/data/about'
 
 export function About() {
   return (

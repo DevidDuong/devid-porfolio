@@ -1,6 +1,7 @@
 import { Mail } from 'lucide-react'
-import { Github, Linkedin } from '@/components/brand-icons'
-import { navLinks, profile } from '@/lib/data'
+import { Github, Linkedin } from '@/components/shared/brand-icons'
+import { navLinks } from '@/data/navigation'
+import { profile } from '@/data/profile'
 
 export function Footer() {
   return (

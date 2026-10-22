@@ -3,7 +3,7 @@
 import { motion } from 'framer-motion'
 import { ArrowRight, Download, MapPin } from 'lucide-react'
 import Image from 'next/image'
-import { profile, stats } from '@/lib/data'
+import { profile, stats } from '@/data/profile'
 
 const fadeUp = {
   hidden: { opacity: 0, y: 20 },
@@ -95,8 +95,9 @@ export function Hero() {
             <Image
               src="/images/hero-architecture.png"
               alt="Illustration of a distributed payment system architecture with API gateway, services, and databases"
-              width={1536}
-              height={960}
+              width={1312}
+              height={816}
+              sizes="(min-width: 1024px) 520px, 100vw"
               priority
               className="aspect-[16/10] w-full rounded-xl object-cover"
             />

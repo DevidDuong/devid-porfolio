@@ -3,8 +3,8 @@
 import { AnimatePresence, motion, useScroll, useSpring } from 'framer-motion'
 import { Menu, X } from 'lucide-react'
 import { useEffect, useState } from 'react'
-import { ThemeToggle } from '@/components/theme-toggle'
-import { navLinks } from '@/lib/data'
+import { ThemeToggle } from '@/components/shared/theme-toggle'
+import { navLinks } from '@/data/navigation'
 
 export function Navbar() {
   const [open, setOpen] = useState(false)

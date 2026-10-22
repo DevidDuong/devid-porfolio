@@ -1,8 +1,8 @@
 import { Analytics } from '@vercel/analytics/next'
 import type { Metadata, Viewport } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
-import { ThemeProvider } from '@/components/theme-provider'
-import { profile } from '@/lib/data'
+import { ThemeProvider } from '@/components/providers/theme-provider'
+import { profile } from '@/data/profile'
 import { siteUrl } from '@/lib/site'
 import './globals.css'
 
@@ -51,7 +51,7 @@ export const metadata: Metadata = {
     description,
     type: 'website',
     locale: 'en_US',
-    images: [{ url: '/images/hero-architecture.png', width: 1536, height: 960, alt: 'Backend architecture illustration' }],
+    images: [{ url: '/images/hero-architecture.png', width: 1312, height: 816, alt: 'Backend architecture illustration' }],
   },
   twitter: {
     card: 'summary_large_image',

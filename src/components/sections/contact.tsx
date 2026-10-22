@@ -1,7 +1,7 @@
 import { ArrowUpRight, Mail } from 'lucide-react'
-import { Github, Linkedin } from '@/components/brand-icons'
-import { Reveal } from '@/components/reveal'
-import { profile } from '@/lib/data'
+import { Github, Linkedin } from '@/components/shared/brand-icons'
+import { Reveal } from '@/components/shared/reveal'
+import { profile } from '@/data/profile'
 
 const channels = [
   { label: 'Email', value: profile.email, href: `mailto:${profile.email}`, icon: Mail },
