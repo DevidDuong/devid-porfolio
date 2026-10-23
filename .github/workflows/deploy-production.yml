@@ -1,49 +1,24 @@
-# Production deployment to Vercel. MANUAL ONLY: it runs when you click "Run workflow"
-# (Actions tab -> "Deploy production" -> Run workflow, with "Use workflow from: main").
-# Nothing deploys on push or merge, and Vercel's own Git integration is not used.
-#
-# One-time setup:
-#   GitHub repo -> Settings -> Environments -> New environment "production":
-#     - Deployment branches: "Selected branches" -> main   (optionally: Required reviewers)
-#     - Environment secrets:   VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID
-#     - Environment variable:  NEXT_PUBLIC_SITE_URL = your PRODUCTION domain, as https://<domain>
-#         * First deploy, no custom domain yet: the free Vercel domain, e.g. https://my-portfolio.vercel.app
-#           (Vercel dashboard -> your project -> Settings -> Domains -> the domain listed there)
-#         * Later, with a custom domain: add it in Vercel (Settings -> Domains), then change this variable
-#           to https://your-domain.com and run the workflow again. Nothing else changes.
-#       It is a public value (baked into the site's HTML), so it is a variable, not a secret.
-#
-# Why NEXT_PUBLIC_SITE_URL is set explicitly: this pipeline builds on the GitHub runner (`vercel build`) and
-# uploads the result (`--prebuilt`). Vercel's system variables (VERCEL_URL, VERCEL_PROJECT_PRODUCTION_URL, ...)
-# are not reliably available to a build that does not run on Vercel, so the build must not depend on them.
-#
-# Flow: guard (main only) -> CI (same checks as ci.yml) -> validate config -> vercel pull -> vercel build --prod
-#       -> verify build output -> vercel deploy --prebuilt --prod -> smoke test of the live site.
 name: Deploy production
 
 on:
+  push:
+    branches: [main]
   workflow_dispatch:
 
 permissions:
   contents: read
 
-# Never run two production deploys at once, and never cancel one that is already uploading.
-concurrency:
-  group: deploy-production
-  cancel-in-progress: false
-
 env:
-  # Pinned Vercel CLI (exact version, never "latest": this tool receives the deploy token).
-  # To upgrade: read the CLI release notes, change this one value, then run the workflow.
   VERCEL_CLI_VERSION: 63.1.2
 
 defaults:
   run:
-    shell: bash # fail fast: bash -e -o pipefail
+    shell: bash
 
 jobs:
   guard:
     name: Only deploy from main
+    if: ${{ !github.event.repository.fork }}
     runs-on: ubuntu-24.04
     timeout-minutes: 2
     steps:
@@ -68,8 +43,13 @@ jobs:
     needs: ci
     runs-on: ubuntu-24.04
     timeout-minutes: 20
+    permissions:
+      contents: read
+    concurrency:
+      group: deploy-production
+      cancel-in-progress: false
     environment:
-      name: production # branch restriction, approvals and the Vercel secrets live on this environment
+      name: production
       url: ${{ steps.deploy.outputs.site_url }}
     steps:
       - name: Check out code
@@ -84,8 +64,6 @@ jobs:
           cache: npm
 
       - name: Verify required configuration
-        # Fails before anything is installed or built. Only names are printed, never values.
-        # NEXT_PUBLIC_SITE_URL may be the free https://<project>.vercel.app domain or a custom https domain.
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -93,16 +71,25 @@ jobs:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
         run: |
           failed=0
+          echo "Configuration seen by this job (PRESENT / MISSING only; values are never printed):"
+          for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID NEXT_PUBLIC_SITE_URL; do
+            if [ -n "${!name}" ]; then
+              printf '  %-22s PRESENT\n' "$name"
+            else
+              printf '  %-22s MISSING\n' "$name"
+            fi
+          done
+          where="Check Settings -> Environments -> production (exact name): secrets belong under 'Environment secrets', NEXT_PUBLIC_SITE_URL under 'Environment variables'. Names are case-sensitive. Make sure the values were not saved in a different environment or under Dependabot/Codespaces secrets."
           for name in VERCEL_TOKEN VERCEL_ORG_ID VERCEL_PROJECT_ID; do
             if [ -z "${!name}" ]; then
-              echo "::error title=Missing secret::Environment secret $name is not set on the 'production' environment."
+              echo "::error title=Missing secret::$name is empty in this job. $where"
               failed=1
             fi
           done
 
           url="$NEXT_PUBLIC_SITE_URL"
           if [ -z "$url" ]; then
-            echo "::error title=Missing variable::Environment variable NEXT_PUBLIC_SITE_URL is not set on the 'production' environment. Use your production domain, e.g. https://my-portfolio.vercel.app (Vercel project -> Settings -> Domains)."
+            echo "::error title=Missing variable::NEXT_PUBLIC_SITE_URL is empty in this job. Add it as an environment VARIABLE (not a secret) with your production domain, e.g. https://my-portfolio.vercel.app (Vercel project -> Settings -> Domains). $where"
             failed=1
           else
             lower="$(printf '%s' "$url" | tr '[:upper:]' '[:lower:]')"
@@ -137,7 +124,6 @@ jobs:
         run: npm install --global --ignore-scripts --no-audit --no-fund "vercel@${VERCEL_CLI_VERSION}"
 
       - name: Pull Vercel project settings
-        # The only step before the deploy that receives the token. Writes .vercel/ (gitignored).
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -145,16 +131,11 @@ jobs:
         run: vercel pull --yes --environment=production
 
       - name: Build (vercel build --prod)
-        # Every build-time variable the site needs is passed explicitly here: NEXT_PUBLIC_SITE_URL is the only one.
-        # No Vercel token: the build runs project and dependency code, and the CLI does not need credentials to build.
         env:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
         run: vercel build --prod
 
       - name: Verify build output
-        # The canonical URL baked into the build must equal NEXT_PUBLIC_SITE_URL. This catches a missing or
-        # overridden variable that would otherwise deploy "successfully" with a localhost or wrong-domain canonical.
-        # It also records the Next.js build ID, which the smoke test looks for in the live site.
         id: build_output
         env:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
@@ -176,8 +157,26 @@ jobs:
           esac
           echo "build_id=$build_id" >> "$GITHUB_OUTPUT"
 
+      - name: Check this commit is still the tip of main
+        id: tip
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          tip="$(gh api "repos/${GITHUB_REPOSITORY}/commits/main" --jq .sha)"
+          case "$tip" in
+            [0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f][0-9a-f]*) ;;
+            *) echo "::error title=Cannot read main::GitHub did not return a commit SHA for main. Not deploying."; exit 1 ;;
+          esac
+          if [ "$tip" = "$GITHUB_SHA" ]; then
+            echo "stale=false" >> "$GITHUB_OUTPUT"
+          else
+            echo "stale=true" >> "$GITHUB_OUTPUT"
+            echo "::warning title=Not deploying an older commit::main has moved on to ${tip:0:7}; this run is for ${GITHUB_SHA:0:7}. The newer commit's run deploys it."
+          fi
+
       - name: Deploy (vercel deploy --prebuilt --prod)
         id: deploy
+        if: steps.tip.outputs.stale != 'true'
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
           VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
@@ -200,9 +199,7 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Smoke test production site
-        # Checks the real site at NEXT_PUBLIC_SITE_URL, not just "is something answering": the page must contain
-        # the build ID of the build we just deployed, plus the security header and the canonical URL.
-        # The deployment is already live at this point. A failure means: look at the site, roll back if needed.
+        if: steps.tip.outputs.stale != 'true'
         env:
           NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL }}
           BUILD_ID: ${{ steps.build_output.outputs.build_id }}
