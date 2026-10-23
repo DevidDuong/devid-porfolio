@@ -1,7 +1,7 @@
 import { Cloud, Database, Server, Wrench, Container } from 'lucide-react'
-import { Reveal } from '@/components/reveal'
-import { SectionHeading } from '@/components/section-heading'
-import { skillGroups } from '@/lib/data'
+import { Reveal } from '@/components/shared/reveal'
+import { SectionHeading } from '@/components/shared/section-heading'
+import { skillGroups } from '@/data/skills'
 
 const icons = {
   Backend: Server,

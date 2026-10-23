@@ -1,7 +1,7 @@
 import { Boxes, Braces, Container, CreditCard, ShieldCheck, Workflow } from 'lucide-react'
-import { Reveal } from '@/components/reveal'
-import { SectionHeading } from '@/components/section-heading'
-import { expertise } from '@/lib/data'
+import { Reveal } from '@/components/shared/reveal'
+import { SectionHeading } from '@/components/shared/section-heading'
+import { expertise } from '@/data/expertise'
 
 const icons = {
   boxes: Boxes,

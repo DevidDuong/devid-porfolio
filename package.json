@@ -2,9 +2,13 @@
   "name": "my-project",
   "version": "0.1.0",
   "private": true,
-  "packageManager": "pnpm@12.3.4",
+  "packageManager": "npm@10.9.3",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
-    "dev": "next dev",
+    "dev": "dotenv -e .env -- next dev",
+    "dev:watch": "dotenv -e .env -- nodemon",
     "build": "next build",
     "start": "next start"
   },
@@ -28,6 +32,8 @@
     "@types/node": "^24",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv-cli": "^11.0.0",
+    "nodemon": "^3.1.14",
     "postcss": "^8.5",
     "tailwindcss": "^4.3.3",
     "typescript": "5.7.3"

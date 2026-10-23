@@ -1,0 +1,12 @@
+{
+  "watch": [
+    "next.config.mjs",
+    "postcss.config.mjs",
+    "tsconfig.json",
+    "package.json"
+  ],
+  "ext": "mjs,js,json",
+  "exec": "next dev",
+  "signal": "SIGTERM",
+  "delay": 500
+}

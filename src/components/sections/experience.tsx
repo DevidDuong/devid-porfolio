@@ -1,6 +1,6 @@
-import { Reveal } from '@/components/reveal'
-import { SectionHeading } from '@/components/section-heading'
-import { experience } from '@/lib/data'
+import { Reveal } from '@/components/shared/reveal'
+import { SectionHeading } from '@/components/shared/section-heading'
+import { experience } from '@/data/experience'
 
 export function Experience() {
   return (
