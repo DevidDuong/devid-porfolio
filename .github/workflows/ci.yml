@@ -1,0 +1,55 @@
+# Continuous integration: type-check and production build.
+#
+# Runs on pushes to `dev` and on pull requests into `main`. It is also called by
+# deploy-production.yml, so a production deploy runs exactly the same checks.
+# No secrets are used here, and `pull_request` (not `pull_request_target`) is used on purpose,
+# so pull requests from forks can never read repository secrets.
+name: CI
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+  workflow_call:
+
+# Least privilege: the token can only read repository contents.
+permissions:
+  contents: read
+
+# A newer push to the same branch/PR supersedes a run that is still going.
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+defaults:
+  run:
+    shell: bash # fail fast: bash -e -o pipefail
+
+jobs:
+  verify:
+    name: Type-check and build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Check out code
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false # nothing here needs to push, so don't leave a token on disk
+
+      - name: Set up Node.js 22
+        uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
+        with:
+          node-version: 22
+          cache: npm # keyed on package-lock.json
+
+      - name: Install dependencies
+        # Exact install from package-lock.json. --ignore-scripts stops dependencies' install hooks from running.
+        run: npm ci --ignore-scripts
+
+      - name: Type-check
+        # --no-install: never download an unrelated package named "tsc" if TypeScript were ever missing.
+        run: npx --no-install tsc --noEmit
+
+      - name: Build
+        run: npm run build
