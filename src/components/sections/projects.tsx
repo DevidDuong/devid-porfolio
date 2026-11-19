@@ -42,26 +42,35 @@ function ProjectCard({ project }: { project: Project }) {
       </ul>
 
       <div className="mt-auto flex gap-3 pt-6">
-        <a
-          href={project.github}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
-        >
-          <Github className="size-4" aria-hidden="true" />
-          GitHub
-          <span className="sr-only">{`repository for ${project.title}`}</span>
-        </a>
-        <a
-          href={project.demo}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
-        >
-          <ExternalLink className="size-4" aria-hidden="true" />
-          Live Demo
-          <span className="sr-only">{`of ${project.title}`}</span>
-        </a>
+        {project.github && (
+          <a
+            href={project.github}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg border border-border px-4 py-2.5 text-sm font-medium transition-colors hover:bg-secondary"
+          >
+            <Github className="size-4" aria-hidden="true" />
+            GitHub
+            <span className="sr-only">{`repository for ${project.title}`}</span>
+          </a>
+        )}
+        {project.demo && (
+          <a
+            href={project.demo}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex flex-1 items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-primary-foreground transition-opacity hover:opacity-90"
+          >
+            <ExternalLink className="size-4" aria-hidden="true" />
+            Live Demo
+            <span className="sr-only">{`of ${project.title}`}</span>
+          </a>
+        )}
+        {!project.github && !project.demo && project.note && (
+          <p className="flex-1 rounded-lg border border-dashed border-border px-4 py-2.5 text-center text-sm text-muted-foreground">
+            {project.note}
+          </p>
+        )}
       </div>
     </article>
   )
@@ -79,7 +88,7 @@ export function Projects() {
           id="projects-title"
           eyebrow="Featured projects"
           title="Systems built for production"
-          description="A selection of FinTech and infrastructure work, with the architecture decisions behind each."
+          description="A selection of FinTech, infrastructure and developer-tool work, with the architecture decisions behind each."
         />
 
         <div role="group" aria-label="Filter projects by category" className="mb-10 flex flex-wrap justify-center gap-2">
