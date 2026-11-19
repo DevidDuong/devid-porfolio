@@ -1,4 +1,10 @@
-export type ProjectCategory = 'Open Banking' | 'Payments' | 'Infrastructure' | 'Observability'
+export type ProjectCategory =
+  | 'Open Banking'
+  | 'Payments'
+  | 'Personal Finance'
+  | 'Infrastructure'
+  | 'Observability'
+  | 'Developer Tools'
 
 export type Project = {
   title: string
@@ -6,19 +12,50 @@ export type Project = {
   description: string
   stack: string[]
   architecture: string[]
-  github: string
-  demo: string
+  // Links are optional: omit one when it does not exist (private repo, desktop app with no hosted demo).
+  github?: string
+  demo?: string
+  // Shown in place of the buttons when a project has neither link.
+  note?: string
 }
 
 export const projectCategories: ('All' | ProjectCategory)[] = [
   'All',
   'Open Banking',
   'Payments',
+  'Personal Finance',
   'Infrastructure',
   'Observability',
+  'Developer Tools',
 ]
 
 export const projects: Project[] = [
+  {
+    title: 'MoneyFlow',
+    category: 'Personal Finance',
+    description:
+      'A personal-finance web app with USD and KHR accounts, append-only income and expense entries, derived balances, and spending summaries — built security-first on Supabase Auth and Postgres row-level security.',
+    stack: ['Next.js', 'TypeScript', 'Supabase', 'PostgreSQL', 'Tailwind CSS', 'Vitest', 'pgTAP'],
+    architecture: [
+      'Server-side-only Supabase access with HttpOnly session cookies and no browser client',
+      'Deny-by-default Postgres privileges with RLS on every table, checked by a migration linter and pgTAP tests',
+      'Every protected route and Server Action must call requireUser(), enforced by AST-based authorization tests',
+    ],
+    note: 'Private repository',
+  },
+  {
+    title: 'Vibe-Board',
+    category: 'Developer Tools',
+    description:
+      'A privacy-first macOS menu-bar library for terminal commands: save, search and copy the commands you reuse from a global shortcut. Everything stays on your Mac.',
+    stack: ['Python', 'PySide6', 'PyObjC', 'SQLite', 'pytest', 'PyInstaller'],
+    architecture: [
+      'Write-only clipboard adapter: no clipboard read API exists, and a test fails if one is ever added',
+      'Commands are inert data: an AST test bans subprocess, exec and network imports',
+      'Local SQLite store with owner-only file permissions and a secret scanner that blocks private keys',
+    ],
+    github: 'https://github.com/DevidDuong/vibe-board',
+  },
   {
     title: 'Open Banking Platform',
     category: 'Open Banking',
